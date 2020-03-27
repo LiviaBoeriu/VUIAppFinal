@@ -35,6 +35,19 @@ const app = dialogflow({
 // Initialize app
 firebase.initializeApp();
 
+const getKeysOfObject = (obj) => {
+  let string = '';
+
+  try {
+    const keys = Object.keys(obj);
+    keys.forEach(key => { string += `${key} ,` });
+  } catch (e) {
+    return e;
+  }
+
+  return string;
+}
+
 // Test database functionality
 app.intent('TestDB', (conv) => {
   let docRef = db.collection('users').doc('alovelace');
@@ -54,7 +67,7 @@ app.intent('Sign In', (conv) => {
 
 // Intent that starts the account linking flow.
 app.intent('Start Signin', (conv) => {
-  conv.ask(new SignIn('To get your account details'));
+  conv.ask(new SignIn('Hello, because this is the first time I meet you, I am going to need some permissions from you. In order to use our modules'));
 });
 // Create a Dialogflow intent with the `actions_intent_SIGN_IN` event.
 app.intent('Get Signin', (conv, params, signin) => {
@@ -62,29 +75,33 @@ app.intent('Get Signin', (conv, params, signin) => {
     const payload = conv.user.profile.payload;
     const { email } = conv.user;
 
-    let docRef = db.collection('users').doc(`${payload.given_name}  ${payload.family_name}`);
+    let docRef = db.collection('users').doc(`${payload.email}`);
 
     let setNewUser = docRef.set({
       firstName: payload.given_name,
       lastName: payload.family_name,
       email: payload.email,
-      sandboxMessage: ' '
+      sandboxMessage: null,
+      conversationQuestion: null
     });
-    conv.ask(` I have successfully connected you to the app. What would you like to do now? You can: play a game, have a conversation or go to the message board`);
+    conv.ask(`I have successfully connected you to the app. What would you like to do now? You can: play a game, have a conversation or go to the message board`);
   } else {
     conv.ask(`I won't be able to save your data, but what do you want to do next?`);
   }
 });
 
 // Default welcome intent
-app.intent('Default Welcome Intent', (conv, signin) => {
-  // get the collection > map through the collection > check if the connected user is in the db
+app.intent('Default Welcome Intent', (conv) => {
+  // check if the user has an existing sign in
+  if (!conv.user.profile.payload) {
+    conv.followup(`startSignIn`);
+  } else {
+    conv.ask(`Hello again! What would you like to do? You can have a conversation, play a game or relieve a memory`);
 
-  conv.ask(`You need to sign in first in order to be able to use This Closer. If you agree to do that just say "Start signin"`);
-
-  conv.ask(new Suggestions('Game'));
-  conv.ask(new Suggestions('Conversation'));
-  conv.ask(new Suggestions('Message Board'));
+    conv.ask(new Suggestions('Game'));
+    conv.ask(new Suggestions('Conversation'));
+    conv.ask(new Suggestions('Message Board'));
+  }
 });
 
 /*
@@ -94,23 +111,15 @@ app.intent('Default Welcome Intent', (conv, signin) => {
 
 // Game entry point
 app.intent('Game: Enter', (conv) => {
-  conv.close(`Ok, lets play two truths one lie. 
-    Haha, kidding! You are going to do most of the work. 
-    One of you should begin thinking of three statements about yourself out of which one is false. 
-    When you have done that just say: Ok Google, tell Discloser we are done`);
+
+  // maybe tell them to write the ideas down so that they have them preparred for the next step
+  conv.close(`Ok, lets play two truths one lie. One of you should begin thinking of three statements about yourself out of which one is false. 
+              When you have done that just say: Ok Google, tell Discloser we are done.`);
 });
 
 
 // Try again round
 app.intent('Game: GetStatements TryAgain', (conv, params) => {
-  conv.user.storage.firstStatement = conv.parameters.first;
-  var firstStatement = conv.user.storage.firstStatement;
-
-  conv.user.storage.secondStatement = conv.parameters.second;
-  var secondStatement = conv.user.storage.secondStatement;
-
-  conv.user.storage.thirdStatement = conv.parameters.third;
-  var thirdStatement = conv.user.storage.thirdStatement;
 
   conv.ask(`Awesome! Now you have to guess which is the false statement!`);
 
@@ -159,7 +168,7 @@ app.intent('Correct try again', (conv) => {
 
 // End of game after correct guess
 app.intent('Correct end game', (conv) => {
-  conv.ask('Ok, no problem! Let me know if you want to try the other modes, or if you want to quit.');
+  conv.ask('Ok, no problem! Let me know if you want to try the other modes by saying: conversation or memory sandbox. If you want to quit just say quit.');
 
 
   conv.ask(new Suggestions('Conversation'));
@@ -169,7 +178,7 @@ app.intent('Correct end game', (conv) => {
 
 // Try again second funnel
 app.intent('Game: TryAgainScope', (conv) => {
-  conv.close(`Ok, that's awesome. I will give you some time to think of the three statements. When you are done just say: Ok Google, tell Discloser we are done!`);
+  conv.close(`Ok, that's awesome. You will have you some time to think of the three statements. When you are done just say: Ok Google, tell Discloser we are done!`);
 });
 
 // Try again funnel from the incorrect guess
@@ -204,20 +213,33 @@ app.intent('Game DeepLinkStatements', (conv) => {
 // The conversation module takes conversation as invocation and returns a response asking the users to say a phase to begin
 // The phase is "Give us a question".
 app.intent('Conversation: Welcome', (conv) => {
-  conv.ask("Hi guys, and welcome to self-disclosure conversation! Say: Give us a question to start. When you are done talking about the matter, just wake me up by saying: Ok google, ask ThisCloser for the next question. If you want the question repeated say: Ok google, ask discloser to repeat.");
+  conv.ask("Welcome to self-disclosure conversation! Say: Give us a question to start. When you are done talking about the matter, just wake me up by saying: Ok google, ask ThisCloser for the next question. If you want the question repeated say: Ok google, ask discloser to repeat.");
 });
 
 // The give us a question module is in the context of the Conversation module and it should give the users a 
 // random low or high intimacy question and then standby for the "Next question" or "end" invocation.
-app.intent('Conversation: GetQuestion', (conv) => {
+app.intent('Conversation: GetQuestion', async (conv) => {
+  const email = conv.user.profile.payload.email;
+
+  // let userRef = db.collection('users').doc('DC');
+
+  // Set the 'capital' field of the city
+  // let updateSingle = userRef.update({ conversationQuestion: question.getQuestion() });
 
   // The output command getting a question and asking the users
   // Missing: Wait for the invocation needed to continue. Right now it asked what the users are saying which it should not.
-  conv.user.storage.returnedQuestion = question.getQuestion();
-  var returnedQuestion = conv.user.storage.returnedQuestion;
-
-  conv.close(`${conv.user.storage.returnedQuestion}`);
+  var returnedQuestion = question.getQuestion();
   question.updateQuestionPool();
+
+  try {
+    const userRef = db.collection('users').doc(email);
+
+    userRef.update({ conversationQuestion: returnedQuestion });
+  } catch (e) {
+    conv.close(`${e}`);
+  }
+
+  conv.close(`${returnedQuestion}`);
 });
 
 // The next question Intent takes the user from the GetQuestion Intent through the next question scope and to the next question
@@ -241,10 +263,17 @@ app.intent('Conversation DeepLinkRepeatQuestion', (conv) => {
 
 });
 
-app.intent('Conversation: RepeatQuestion', (conv) => {
+app.intent('Conversation: RepeatQuestion', async (conv) => {
+  const email = conv.user.profile.payload.email;
 
-  conv.close(`${conv.user.storage.returnedQuestion}`);
+  try {
+    const usersCollection = db.collection('users');
+    const snapshot = await usersCollection.where('email', '==', email).get();
 
+    conv.close(`${snapshot.docs[0].data().conversationQuestion}`);
+  } catch (e) {
+    conv.close(`${e}`);
+  }
 });
 
 // The question object contains arrays of high and low intimacy questions. It stores them in a question pool.
@@ -341,10 +370,10 @@ var question = {
 */
 
 app.intent('Sandbox: MessageWelcome', (conv) => {
-  conv.ask(`Welcome to the message sandbox. Here, you can leave messages for the other person, or enter a memory and later remember it!`);
-  conv.ask(`For writing a memory say: enter message, and for relieving a memory say: relieve memory`);
+  conv.ask(`Welcome to the memory sandbox. Here, you can leave memories and later relieve them!`);
+  conv.ask(`For writing a memory say: enter memory, and for relieving a memory say: relieve memory`);
 
-  conv.ask(new Suggestions('Enter message'));
+  conv.ask(new Suggestions('Enter memory'));
   conv.ask(new Suggestions('Relieve memory'));
 });
 
@@ -358,13 +387,21 @@ app.intent('Sandbox: WriteMessage', (conv) => {
   }
 });
 
-app.intent('Sandbox: Relieve memory', (conv) => {
-  if (conv.user.verification === 'VERIFIED') {
-    conv.ask(`Your last memory is ${conv.user.storage.message}`);
-  } else {
-    conv.close(`I can't store you message unfortunately because you are not signed in.`);
+app.intent('Sandbox: Relieve memory', async (conv) => {
+  const email = conv.user.profile.payload.email;
+
+  try {
+    const usersCollection = db.collection('users');
+    const snapshot = await usersCollection.where('email', '==', email).get();
+
+    // let string = getKeysOfObject(snapshot.docs[0].data());
+    conv.close(`Your last message was: ${snapshot.docs[0].data().sandboxMessage}`);
+  } catch (e) {
+    conv.close(`${e}`);
   }
+
 });
+
 
 // Create circularity for the sandbox after it says what the last memory is
 // change boing sound for the correct
