@@ -1,6 +1,5 @@
 'use strict';
 
-
 // Import the Dialogflow module and response creation dependencies
 // from the Actions on Google client library.
 const {
@@ -9,14 +8,19 @@ const {
   Suggestions,
 } = require('actions-on-google');
 
-
+// CImport the firebase package for deployment
 var firebase = require("firebase/app");
 
+// Import the firebase-admin package for deployment
 const admin = require('firebase-admin');
+
+// Import the firebase-functions package for deployment.
 const functions = require('firebase-functions');
 
+// Initialize app with admin credentials
 admin.initializeApp(functions.config().firebase);
 
+// Create databse instance
 let db = admin.firestore();
 
 // // Import the firebase-functions package for deployment.
@@ -28,11 +32,12 @@ const app = dialogflow({
   clientId: '1067335608783-j43vajnoqsrt1krms3sk48f7uos6knpl.apps.googleusercontent.com',
 });
 
+// Initialize app
 firebase.initializeApp();
 
-
+// Test database functionality
 app.intent('TestDB', (conv) => {
-  let docRef = db.collection('user').doc('alovelace');
+  let docRef = db.collection('users').doc('alovelace');
 
   let setNewUser = docRef.set({
     first: 'Ada',
@@ -42,7 +47,7 @@ app.intent('TestDB', (conv) => {
   conv.close('I have writen data');
 });
 
-
+// Enter sign in flow 
 app.intent('Sign In', (conv) => {
   conv.followup(`startSignIn`);
 });
@@ -55,16 +60,27 @@ app.intent('Start Signin', (conv) => {
 app.intent('Get Signin', (conv, params, signin) => {
   if (signin.status === 'OK') {
     const payload = conv.user.profile.payload;
-    conv.ask(`I have your data! ${payload.family_name}`);
+    const { email } = conv.user;
+
+    let docRef = db.collection('users').doc(`${payload.given_name}  ${payload.family_name}`);
+
+    let setNewUser = docRef.set({
+      firstName: payload.given_name,
+      lastName: payload.family_name,
+      email: payload.email,
+      sandboxMessage: ' '
+    });
+    conv.ask(` I have successfully connected you to the app. What would you like to do now? You can: play a game, have a conversation or go to the message board`);
   } else {
     conv.ask(`I won't be able to save your data, but what do you want to do next?`);
   }
 });
 
-
 // Default welcome intent
 app.intent('Default Welcome Intent', (conv, signin) => {
-  conv.ask(`Hello, I am here to enrich your conversations! What would you like to do? You can play a game, have a conversation or go to the message board or sign in`);
+  // get the collection > map through the collection > check if the connected user is in the db
+
+  conv.ask(`You need to sign in first in order to be able to use This Closer. If you agree to do that just say "Start signin"`);
 
   conv.ask(new Suggestions('Game'));
   conv.ask(new Suggestions('Conversation'));
@@ -84,23 +100,6 @@ app.intent('Game: Enter', (conv) => {
     When you have done that just say: Ok Google, tell Discloser we are done`);
 });
 
-// // Initial get statements entry point [deprecated right now]
-// app.intent('Game: GetStatements original', (conv, params) => {
-//   conv.user.storage.firstStatement = conv.parameters.first;
-//   var firstStatement = conv.user.storage.firstStatement;
-
-//   conv.user.storage.secondStatement = conv.parameters.second;
-//   var secondStatement = conv.user.storage.secondStatement;
-
-//   conv.user.storage.thirdStatement = conv.parameters.third;
-//   var thirdStatement = conv.user.storage.thirdStatement;
-
-//   conv.ask(`Super, now you have to guess which is the false statement!`);
-
-//   conv.ask(new Suggestions('I think the false one is'));
-//   conv.ask(new Suggestions('I think the false one is'));
-//   conv.ask(new Suggestions('I think the false one is'));
-// });
 
 // Try again round
 app.intent('Game: GetStatements TryAgain', (conv, params) => {
