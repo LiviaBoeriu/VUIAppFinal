@@ -35,6 +35,7 @@ const app = dialogflow({
 // Initialize app
 firebase.initializeApp();
 
+// Method for getting the object keys in order to find what an object contains
 const getKeysOfObject = (obj) => {
   let string = '';
 
@@ -48,17 +49,6 @@ const getKeysOfObject = (obj) => {
   return string;
 }
 
-// Test database functionality
-app.intent('TestDB', (conv) => {
-  let docRef = db.collection('users').doc('alovelace');
-
-  let setNewUser = docRef.set({
-    first: 'Ada',
-    last: 'Lovelace',
-    born: 1815
-  });
-  conv.close('I have writen data');
-});
 
 // Enter sign in flow 
 app.intent('Sign In', (conv) => {
@@ -101,6 +91,7 @@ app.intent('Default Welcome Intent', (conv) => {
     conv.ask(new Suggestions('Game'));
     conv.ask(new Suggestions('Conversation'));
     conv.ask(new Suggestions('Message Board'));
+    conv.ask(new Suggestions('Help'));
   }
 });
 
@@ -114,7 +105,7 @@ app.intent('Game: Enter', (conv) => {
 
   // maybe tell them to write the ideas down so that they have them preparred for the next step
   conv.close(`Ok, lets play two truths one lie. One of you should begin thinking of three statements about yourself out of which one is false. 
-              When you have done that just say: Ok Google, tell Discloser we are done.`);
+              When you have done that just say: Ok Google, tell Discloser we are ready. If you need help say: "Hey Google, ask This Closerr to help us with the game"`);
 });
 
 
@@ -220,11 +211,6 @@ app.intent('Conversation: Welcome', (conv) => {
 // random low or high intimacy question and then standby for the "Next question" or "end" invocation.
 app.intent('Conversation: GetQuestion', async (conv) => {
   const email = conv.user.profile.payload.email;
-
-  // let userRef = db.collection('users').doc('DC');
-
-  // Set the 'capital' field of the city
-  // let updateSingle = userRef.update({ conversationQuestion: question.getQuestion() });
 
   // The output command getting a question and asking the users
   // Missing: Wait for the invocation needed to continue. Right now it asked what the users are saying which it should not.
@@ -370,7 +356,7 @@ var question = {
 */
 
 app.intent('Sandbox: MessageWelcome', (conv) => {
-  conv.ask(`Welcome to the memory sandbox. Here, you can leave memories and later relieve them!`);
+  conv.ask(`Welcome to the memory box. Here, you can leave memories and later relieve them!`);
   conv.ask(`For writing a memory say: enter memory, and for relieving a memory say: relieve memory`);
 
   conv.ask(new Suggestions('Enter memory'));
@@ -403,15 +389,21 @@ app.intent('Sandbox: Relieve memory', async (conv) => {
 });
 
 
-// Create circularity for the sandbox after it says what the last memory is
-// change boing sound for the correct
-// review questions 
-// 
-
 /*
   End of section for sandbox message module
 */
 
+
+app.intent('Commands Help', (conv) => {
+  conv.ask(`<speak> <s> The available commands are: "play a game" to access the game module, <break strength="medium"/> 
+          "conversation" to access the conversation module, <break strength="medium"/>
+          "message" to access the message box <break strength="medium"/>.
+          Some other commands you can use are:
+          "Ok Google, tell This Closerr we are ready" to get the next steps in the game, <break strength="medium"/>
+          "Hey Google, repeat the question" to get the topic for conversation repeated, <break strength="medium"/>
+          And "Ok Google, next question" to get a new topic. </s> </speak>`);
+  conv.ask(`For detailed commands available in each module just say: "Hey Google, ask This Closerr for help with" followed by the name of the module `);
+});
 
 // Set the DialogflowApp object to handle the HTTPS POST request.
 exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app)
