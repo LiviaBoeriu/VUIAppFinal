@@ -86,7 +86,7 @@ app.intent('Default Welcome Intent', (conv) => {
   if (!conv.user.profile.payload) {
     conv.followup(`startSignIn`);
   } else {
-    conv.ask(`Hello again! What would you like to do? You can have a conversation, play a game or relieve a memory`);
+    conv.ask(`Hello again! What would you like to do? You can have a conversation, play a game or go to the message board`);
 
     conv.ask(new Suggestions('Game'));
     conv.ask(new Suggestions('Conversation'));
