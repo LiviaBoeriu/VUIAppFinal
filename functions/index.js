@@ -249,6 +249,7 @@ app.intent('Conversation DeepLinkRepeatQuestion', (conv) => {
 
 });
 
+// A method for repeating the last question given
 app.intent('Conversation: RepeatQuestion', async (conv) => {
   const email = conv.user.profile.payload.email;
 
@@ -355,6 +356,7 @@ var question = {
   Start of section for sandbox message module
 */
 
+// Action for entering the message sandbox
 app.intent('Sandbox: MessageWelcome', (conv) => {
   conv.ask(`Welcome to the memory box. Here, you can leave memories and later relieve them!`);
   conv.ask(`For writing a memory say: enter memory, and for relieving a memory say: relieve memory`);
@@ -363,16 +365,28 @@ app.intent('Sandbox: MessageWelcome', (conv) => {
   conv.ask(new Suggestions('Relieve memory'));
 });
 
+// Action for getting and storing a message
 app.intent('Sandbox: WriteMessage', (conv) => {
-  const { payload } = conv.user.profile;
-  if (conv.user.verification === 'VERIFIED') {
-    conv.user.storage.message = conv.parameters.message;
-    conv.ask(`Your message is ${conv.user.storage.message}. If you want to hear this message again at some point in the future just say: relieve memory. What would you like to do now? You can play a game, get a topic for conversation o quit`);
-  } else {
-    conv.close(`I can't store you message unfortunately because you are not signed in.`);
+  // Take the current user email
+  const email = conv.user.profile.payload.email;
+
+  // Store the message from the conversation
+  var memory = conv.parameters.message;
+
+  // Update the database for this particular user
+  try {
+    const userRef = db.collection('users').doc(email);
+
+    userRef.update({ sandboxMessage: memory });
+  } catch (e) {
+    conv.close(`${e}`);
   }
+
+  // Response
+  conv.ask(`Your memory is ${memory}. If you want to hear this again at some point in the future just say: relieve memory. What would you like to do now? You can play a game, get a topic for conversation o quit`);
 });
 
+// Action for getting the last memory stored
 app.intent('Sandbox: Relieve memory', async (conv) => {
   const email = conv.user.profile.payload.email;
 
@@ -394,7 +408,10 @@ app.intent('Sandbox: Relieve memory', async (conv) => {
 */
 
 
-app.intent('Commands Help', (conv) => {
+/*
+  Start section for the commands help actions
+*/
+app.intent('Help General Help', (conv) => {
   conv.ask(`<speak> <s> The available commands are: "play a game" to access the game module, <break strength="medium"/> 
           "conversation" to access the conversation module, <break strength="medium"/>
           "message" to access the message box <break strength="medium"/>.
@@ -404,6 +421,23 @@ app.intent('Commands Help', (conv) => {
           And "Ok Google, next question" to get a new topic. </s> </speak>`);
   conv.ask(`For detailed commands available in each module just say: "Hey Google, ask This Closerr for help with" followed by the name of the module `);
 });
+
+app.intent('Help Game Help', (conv) => {
+
+});
+
+app.intent('Help Conversation Help', (conv) => {
+
+});
+
+app.intent('Help Message Help', (conv) => {
+
+});
+
+/*
+  End section for the commands help actions
+*/
+
 
 // Set the DialogflowApp object to handle the HTTPS POST request.
 exports.dialogflowFirebaseFulfillment = functions.https.onRequest(app)
