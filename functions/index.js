@@ -49,6 +49,7 @@ const getKeysOfObject = (obj) => {
   return string;
 }
 
+const MAX_MEMORIES = 3;
 
 // Enter sign in flow 
 app.intent('Sign In', (conv) => {
@@ -71,10 +72,10 @@ app.intent('Get Signin', (conv, params, signin) => {
       firstName: payload.given_name,
       lastName: payload.family_name,
       email: payload.email,
-      sandboxMessage: null,
-      conversationQuestion: null
+      conversationQuestion: null,
+      sandboxMessage: [ ]
     });
-    conv.ask(`I have successfully connected you to the app. What would you like to do now? You can: play a game, have a conversation or go to the message board`);
+    conv.ask(`I have successfully connected you to the app. What would you like to do now? You can: play a game, have a conversation or go to the memory box`);
   } else {
     conv.ask(`I won't be able to save your data, but what do you want to do next?`);
   }
@@ -86,7 +87,7 @@ app.intent('Default Welcome Intent', (conv) => {
   if (!conv.user.profile.payload) {
     conv.followup(`startSignIn`);
   } else {
-    conv.ask(`Hello again! What would you like to do? You can have a conversation, play a game or go to the message board`);
+    conv.ask(`Hello again! What would you like to do? You can have a conversation, play a game or go to the memory box`);
 
     conv.ask(new Suggestions('Game'));
     conv.ask(new Suggestions('Conversation'));
@@ -366,24 +367,34 @@ app.intent('Sandbox: MessageWelcome', (conv) => {
 });
 
 // Action for getting and storing a message
-app.intent('Sandbox: WriteMessage', (conv) => {
-  // Take the current user email
-  const email = conv.user.profile.payload.email;
-
-  // Store the message from the conversation
-  var memory = conv.parameters.message;
-
+app.intent('Sandbox: WriteMessage', async (conv) => {
   // Update the database for this particular user
   try {
-    const userRef = db.collection('users').doc(email);
+        // Take the current user email
+    const email = conv.user.profile.payload.email;
 
-    userRef.update({ sandboxMessage: memory });
+    // Store the message from the conversation
+    var memory = [conv.parameters.message];
+    
+    const usersCollection = db.collection('users');
+    const snapshot = await usersCollection.where('email', '==', email).get();
+
+    // let string = getKeysOfObject(snapshot.docs[0].data());
+    let memories = snapshot.docs[0].data().sandboxMessage;
+    if(memories.length >= MAX_MEMORIES) {
+      
+      memories.splice(0, 1);
+    } 
+    memories = memories.concat(memory);
+    
+    const userRef = db.collection('users').doc(email);
+    userRef.update({ sandboxMessage: memories });
   } catch (e) {
     conv.close(`${e}`);
   }
 
   // Response
-  conv.ask(`Your memory is ${memory}. If you want to hear this again at some point in the future just say: relieve memory. What would you like to do now? You can play a game, get a topic for conversation o quit`);
+  conv.ask(`Your memory is: "${memory}". If you want to hear this again at some point in the future just say: relieve memory. What would you like to do now? You can play a game, get a topic for conversation o quit`);
 });
 
 // Action for getting the last memory stored
@@ -394,12 +405,13 @@ app.intent('Sandbox: Relieve memory', async (conv) => {
     const usersCollection = db.collection('users');
     const snapshot = await usersCollection.where('email', '==', email).get();
 
+    let memoryList = snapshot.docs[0].data().sandboxMessage;
+    let randomMemory =  memoryList[Math.floor(Math.random() * memoryList.length)];
     // let string = getKeysOfObject(snapshot.docs[0].data());
-    conv.close(`Your last message was: ${snapshot.docs[0].data().sandboxMessage}`);
+    conv.close(`Your memory is: ${randomMemory}`);
   } catch (e) {
     conv.close(`${e}`);
   }
-
 });
 
 /*
