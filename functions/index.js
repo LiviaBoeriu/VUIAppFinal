@@ -105,7 +105,7 @@ app.intent('Game: Enter', (conv) => {
 
   // maybe tell them to write the ideas down so that they have them preparred for the next step
   conv.close(`Ok, lets play two truths one lie. One of you should begin thinking of three statements about yourself out of which one is false. 
-              When you have done that just say: Ok Google, tell Discloser we are ready. If you need help say: "Hey Google, ask This Closerr to help us with the game"`);
+              When you have done that just say: "Ok Google, tell Discloser we are ready". If you need help say: "Hey Google, ask This Closerr to help us with the game"`);
 });
 
 
@@ -204,7 +204,7 @@ app.intent('Game DeepLinkStatements', (conv) => {
 // The conversation module takes conversation as invocation and returns a response asking the users to say a phase to begin
 // The phase is "Give us a question".
 app.intent('Conversation: Welcome', (conv) => {
-  conv.ask("Welcome to self-disclosure conversation! Say: Give us a question to start. When you are done talking about the matter, just wake me up by saying: Ok google, ask ThisCloser for the next question. If you want the question repeated say: Ok google, ask discloser to repeat.");
+  conv.ask(`Welcome to self-disclosure conversation! Say: "Give us a question" to start. When you are done talking about the matter, just wake me up by saying: Ok google, ask ThisCloser for the next question. If you want the question repeated say: Ok google, ask discloser to repeat.`);
 });
 
 // The give us a question module is in the context of the Conversation module and it should give the users a 
@@ -402,7 +402,6 @@ app.intent('Sandbox: Relieve memory', async (conv) => {
 
 });
 
-
 /*
   End of section for sandbox message module
 */
@@ -423,15 +422,23 @@ app.intent('Help General Help', (conv) => {
 });
 
 app.intent('Help Game Help', (conv) => {
-
+  conv.ask(`<speak> <s> The available commands for the game are: "play a game" to access the game module, <break strength="medium"/> and
+  "Ok Google, tell Discloser we are ready" for proceeding with the game <break strength="medium"/>. 
+  One of you should think of three statements, then say them out loud when I prompt you and the other has to guess which one is the false statement out of the three. </s> </speak>`);
 });
 
 app.intent('Help Conversation Help', (conv) => {
-
+  conv.ask(`<speak> <s> The available commands for the conversation are: "conversation" to access the conversation module, <break strength="medium"/>,
+  "Give us a question" to get a topic for conversation <break strength="medium"/>,
+  "Ok google, ask discloser to repeat" to have the question repeated <break strength="medium"/>,
+  "Ok google, ask ThisCloser for the next question" to get the another topic for conversation <break strength="medium"/> and
+  "End conversation" to exit the module. </s> </speak>`);
 });
 
 app.intent('Help Message Help', (conv) => {
-
+  conv.ask(`<speak> <s> The available commands for the memory box are: "message" to access the memory box module, <break strength="medium"/>,
+  "Enter memory" to leave a memory in the memory box <break strength="medium"/> and
+  "Relieve memory" to have  a memory revealed to you <break strength="medium"/> </s> </speak>`);
 });
 
 /*
