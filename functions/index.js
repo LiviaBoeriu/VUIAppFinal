@@ -252,12 +252,15 @@ app.intent('Conversation DeepLinkRepeatQuestion', (conv) => {
 
 // A method for repeating the last question given
 app.intent('Conversation: RepeatQuestion', async (conv) => {
+  // get the user's email
   const email = conv.user.profile.payload.email;
 
   try {
+    // match the current email with a doc from the db
     const usersCollection = db.collection('users');
     const snapshot = await usersCollection.where('email', '==', email).get();
 
+    // return the last question 
     conv.close(`${snapshot.docs[0].data().conversationQuestion}`);
   } catch (e) {
     conv.close(`${e}`);
@@ -366,48 +369,59 @@ app.intent('Sandbox: MessageWelcome', (conv) => {
   conv.ask(new Suggestions('Relieve memory'));
 });
 
-// Action for getting and storing a message
+// Action for getting and storing a new memory
 app.intent('Sandbox: WriteMessage', async (conv) => {
-  // Update the database for this particular user
   try {
-        // Take the current user email
+    // take the current user's email
     const email = conv.user.profile.payload.email;
 
     // Store the message from the conversation
     var memory = [conv.parameters.message];
     
+    // get the doc from the db based on the request profile
     const usersCollection = db.collection('users');
     const snapshot = await usersCollection.where('email', '==', email).get();
 
-    // let string = getKeysOfObject(snapshot.docs[0].data());
+    // take the sandboxMessage object from the found doc
     let memories = snapshot.docs[0].data().sandboxMessage;
+
+    // delete the first array if the lenght > 3
     if(memories.length >= MAX_MEMORIES) {
       
       memories.splice(0, 1);
     } 
+    // create a new array with the newest memory
     memories = memories.concat(memory);
     
+    // update db with the new memory
     const userRef = db.collection('users').doc(email);
     userRef.update({ sandboxMessage: memories });
   } catch (e) {
     conv.close(`${e}`);
   }
 
-  // Response
+  // response
   conv.ask(`Your memory is: "${memory}". If you want to hear this again at some point in the future just say: relieve memory. What would you like to do now? You can play a game, get a topic for conversation o quit`);
 });
 
 // Action for getting the last memory stored
 app.intent('Sandbox: Relieve memory', async (conv) => {
+  // get the user's email
   const email = conv.user.profile.payload.email;
 
   try {
+    // get the doc from the db based on the request profile
     const usersCollection = db.collection('users');
     const snapshot = await usersCollection.where('email', '==', email).get();
 
+    // get the sandboxMessage field from the retrieved doc
     let memoryList = snapshot.docs[0].data().sandboxMessage;
+
+    // pick a random element from the sandboxMessage array
     let randomMemory =  memoryList[Math.floor(Math.random() * memoryList.length)];
     // let string = getKeysOfObject(snapshot.docs[0].data());
+
+    // response
     conv.close(`Your memory is: ${randomMemory}`);
   } catch (e) {
     conv.close(`${e}`);
