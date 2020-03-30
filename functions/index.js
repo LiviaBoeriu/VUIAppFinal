@@ -263,7 +263,6 @@ var question = {
     "When was the last time that you really felt like doing a difference for your local community or for the environment?",
     "What are the personal aspects that you would most like to improve, or that you are struggling to do something about at present, e.g. appearance, lack of knowledge, loneliness, temper etc?",
     "What kind of future are you aiming towards, working for, planning for - both personally, educationally and professionally?",
-    "What are your problems and worries about your personality, what do you dislike most about yourself?", // cut
     "What are your thoughts about your health, including any problems, worries, or concerns that you might have at present?",
     "For what in your life do you feel most grateful?",
     "If you could change anything about the way you were raised, what would it be?",
@@ -275,13 +274,11 @@ var question = {
     "What is the greatest accomplishment of your life?",
     "What do you value most in a friendship?",
     "What is your most treasured memory?",
-    "What is your most terrible memory?", // cut
     "If you knew that in one year you would die suddenly, would you change anything about the way you are now living? Why?",
     "What does friendship mean to you?",
     "What is the most embarrasing thing you have ever done? Describe it in detail", // new
     "What roles do love and affection play in your life?",
     "How close and warm is your family? Do you feel your childhood was happier than most other people’s?",
-    "How do you feel about your relationship with your mother?", // cut
     "What, if anything, is too serious to be joked about?",
     "Your house, containing everything you own, catches fire. After saving your loved ones and pets, you have time to safely make a final dash to save any one item. What would it be? Why?",
     "Share a personal challenge and ask your partner’s advice on how he or she might handle it. Also, ask your partner to reflect back to you how you seem to be feeling about the challenge you have chosen." // update
