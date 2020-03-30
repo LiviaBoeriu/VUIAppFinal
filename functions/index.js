@@ -73,7 +73,7 @@ app.intent('Get Signin', (conv, params, signin) => {
       lastName: payload.family_name,
       email: payload.email,
       conversationQuestion: null,
-      sandboxMessage: [ ]
+      sandboxMessage: []
     });
     conv.ask(`I have successfully connected you to the app. What would you like to do now? You can: have a conversation, play a game or go to the memory box`);
   } else {
@@ -282,25 +282,25 @@ var question = {
     "When was the last time that you really felt like doing a difference for your local community or for the environment?",
     "What are the personal aspects that you would most like to improve, or that you are struggling to do something about at present, e.g. appearance, lack of knowledge, loneliness, temper etc?",
     "What kind of future are you aiming towards, working for, planning for - both personally, educationally and professionally?",
-    "What are your problems and worries about your personality, what do you dislike most about yourself?",
     "What are your thoughts about your health, including any problems, worries, or concerns that you might have at present?",
     "For what in your life do you feel most grateful?",
     "If you could change anything about the way you were raised, what would it be?",
     "Take four minutes and tell your partner your life story in as much detail as possible.",
+    "Take four minutes and tell your partner a good memory of yours", // new
+    "Take four minutes and tell your partner a story from your life", // new
     "If you could wake up tomorrow having gained any one quality or ability, what would it be?",
-    "Is there something that you’ve dreamed of doing for a long time? Why haven’t you done it?",
+    "Is there something that you’ve dreamed of doing for a long time? Why haven’t you done it yet?", // updated
     "What is the greatest accomplishment of your life?",
     "What do you value most in a friendship?",
     "What is your most treasured memory?",
-    "What is your most terrible memory?",
     "If you knew that in one year you would die suddenly, would you change anything about the way you are now living? Why?",
     "What does friendship mean to you?",
+    "What is the most embarrasing thing you have ever done? Describe it in detail", // new
     "What roles do love and affection play in your life?",
     "How close and warm is your family? Do you feel your childhood was happier than most other people’s?",
-    "How do you feel about your relationship with your mother?",
     "What, if anything, is too serious to be joked about?",
     "Your house, containing everything you own, catches fire. After saving your loved ones and pets, you have time to safely make a final dash to save any one item. What would it be? Why?",
-    "Share a personal problem and ask your partner’s advice on how he or she might handle it. Also, ask your partner to reflect back to you how you seem to be feeling about the problem you have chosen."
+    "Share a personal challenge and ask your partner’s advice on how he or she might handle it. Also, ask your partner to reflect back to you how you seem to be feeling about the challenge you have chosen." // update
   ],
 
   // An array containing the pool of low intimacy questions
@@ -308,24 +308,31 @@ var question = {
     "How do you find our current political situation?",
     "What would you guys change about this week?",
     "What do you guys like to do in your spare time at home at the present moment?",
-    "What are your favorite song as for now?",
-    "If you had absolutely free choice and no restrcitions, what is then the sport that you see yourself participating in?",
+    "What is your favorite song as for now and why?", // updated
+    "If you had absolutely free choice and no limitations, what is then the sport that you see yourself participating in?", // updated
     "What was something that happened this week, that made you stop and ponder on it, or fascinated you?",
-    "Debate time! What’s worse: Laundry or Dishes?",
+    "Debate time! What is worse: Laundry or Dishes?",
+    "Which places would you like to travel to the most and why?", // new
+    "What did you do the last week?",
+    "Debate time!What is more intriguing: Science or art?",
+    "Are there any skills that you wish you mastered?", // new
+    "What kind of pet is your favorite? Why?", // new
     "Debate time! What is best: Money or Free Time?",
-    "What are your favorite foods right now?",
+    "What are your favorite foods right now? Is there a cuisine you like the best?", // updated
     "Story time! Tell a story about a place you have travelled to that made an unforgettable impression on you.",
     "Debate time! What is more enjoyable: Big Party or Small Gathering?",
     "What do you guys think about the news this past week?",
-    "Story time! Tell a story about about a proud moment you have had in you educational life or work life.",
+    "Story time! Tell a story about a proud moment you have had in your educational life or your work life.", // updated
     "Would you like to be famous? In what way?",
     "Before making a telephone call, do you ever rehearse what you are going to say? Why?",
     "What would constitute a “perfect” day for you?",
     "When did you last sing to yourself? Or to someone else?",
     "Name five! Name five things you and your partner appear to have in common.",
     "Name five! Name five things you consider positive characteristics of your partner.",
+    "Name five! Name five things that you like to do.", // new
     "Name five! Name five series or movies that you want to rewatch the most.",
-    "Name five! Name five things that you are grateful for in your life."
+    "Name five! Name five things you are grateful for in your life.",
+    "Name five! Name five positive experiences you have had today." // new
   ],
 
   // A merged array containing all the questions for the conversation module
@@ -377,7 +384,7 @@ app.intent('Sandbox WriteMessage', async (conv) => {
 
     // Store the message from the conversation
     var memory = [conv.parameters.message];
-    
+
     // get the doc from the db based on the request profile
     const usersCollection = db.collection('users');
     const snapshot = await usersCollection.where('email', '==', email).get();
@@ -386,13 +393,13 @@ app.intent('Sandbox WriteMessage', async (conv) => {
     let memories = snapshot.docs[0].data().sandboxMessage;
 
     // delete the first array if the lenght > 3
-    if(memories.length >= MAX_MEMORIES) {
-      
+    if (memories.length >= MAX_MEMORIES) {
+
       memories.splice(0, 1);
-    } 
+    }
     // create a new array with the newest memory
     memories = memories.concat(memory);
-    
+
     // update db with the new memory
     const userRef = db.collection('users').doc(email);
     userRef.update({ sandboxMessage: memories });
@@ -418,19 +425,19 @@ app.intent('Sandbox WriteMessage Incorrect', async (conv) => {
 
     // Store the message from the conversation
     var memory = [conv.parameters.message];
-    
+
     // get the doc from the db based on the request profile
     const usersCollection = db.collection('users');
     const snapshot = await usersCollection.where('email', '==', email).get();
 
     // take the sandboxMessage object from the found doc
     let memories = snapshot.docs[0].data().sandboxMessage;
-    
+
     // delete the wrong memory
     memories.splice(2, 1);
     // create a new array with the newest memory
     memories = memories.concat(memory);
-    
+
     // update db with the new memory
     const userRef = db.collection('users').doc(email);
     userRef.update({ sandboxMessage: memories });
@@ -459,7 +466,7 @@ app.intent('Sandbox Relieve memory', async (conv) => {
     let memoryList = snapshot.docs[0].data().sandboxMessage;
 
     // pick a random element from the sandboxMessage array
-    let randomMemory =  memoryList[Math.floor(Math.random() * memoryList.length)];
+    let randomMemory = memoryList[Math.floor(Math.random() * memoryList.length)];
     // let string = getKeysOfObject(snapshot.docs[0].data());
 
     // response
