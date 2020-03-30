@@ -75,7 +75,7 @@ app.intent('Get Signin', (conv, params, signin) => {
       conversationQuestion: null,
       sandboxMessage: [ ]
     });
-    conv.ask(`I have successfully connected you to the app. What would you like to do now? You can: play a game, have a conversation or go to the memory box`);
+    conv.ask(`I have successfully connected you to the app. What would you like to do now? You can: have a conversation, play a game or go to the memory box`);
   } else {
     conv.ask(`I won't be able to save your data, but what do you want to do next?`);
   }
@@ -102,16 +102,16 @@ app.intent('Default Welcome Intent', (conv) => {
 */
 
 // Game entry point
-app.intent('Game: Enter', (conv) => {
+app.intent('Game Enter', (conv) => {
 
   // maybe tell them to write the ideas down so that they have them preparred for the next step
-  conv.close(`Ok, lets play two truths one lie. One of you should begin thinking of three statements about yourself out of which one is false. 
+  conv.close(`Ok, lets play two truths one lie. One of you should take a pen and paper or open a writing app on your phone and write down three statements about yourself. One of these statements should be false! 
               When you have done that just say: "Ok Google, tell Discloser we are ready". If you need help say: "Hey Google, ask This Closerr to help us with the game"`);
 });
 
 
 // Try again round
-app.intent('Game: GetStatements TryAgain', (conv, params) => {
+app.intent('Game GetStatements TryAgain', (conv, params) => {
 
   conv.ask(`Awesome! Now you have to guess which is the false statement!`);
 
@@ -121,12 +121,12 @@ app.intent('Game: GetStatements TryAgain', (conv, params) => {
 });
 
 // What is the right answer entry point
-app.intent('Game: TheAnswerIs', (conv) => {
+app.intent('Game TheAnswerIs', (conv) => {
   conv.followup(`what-do-you-think`);
 });
 
 // Verify if the guess is right
-app.intent('Game: IsThatTheAnswer', (conv) => {
+app.intent('Game IsThatTheAnswer', (conv) => {
   conv.ask('Was that the correct guess?');
 
   conv.ask(new Suggestions('Yes, that is correct!'));
@@ -169,7 +169,7 @@ app.intent('Correct end game', (conv) => {
 });
 
 // Try again second funnel
-app.intent('Game: TryAgainScope', (conv) => {
+app.intent('Game TryAgainScope', (conv) => {
   conv.close(`Ok, that's awesome. You will have you some time to think of the three statements. When you are done just say: Ok Google, tell Discloser we are done!`);
 });
 
@@ -204,13 +204,13 @@ app.intent('Game DeepLinkStatements', (conv) => {
 
 // The conversation module takes conversation as invocation and returns a response asking the users to say a phase to begin
 // The phase is "Give us a question".
-app.intent('Conversation: Welcome', (conv) => {
-  conv.ask(`Welcome to self-disclosure conversation! Say: "Give us a question" to start. When you are done talking about the matter, just wake me up by saying: Ok google, ask ThisCloser for the next question. If you want the question repeated say: Ok google, ask discloser to repeat.`);
+app.intent('Conversation Welcome', (conv) => {
+  conv.ask(`Welcome to self-disclosure conversation! Say: "Give us a question" to start. When you are done talking about the matter, just wake me up by saying: "Ok google, ask Discloser for the next question". If you want the question repeated say: "Ok google, ask Discloser to repeat".`);
 });
 
 // The give us a question module is in the context of the Conversation module and it should give the users a 
 // random low or high intimacy question and then standby for the "Next question" or "end" invocation.
-app.intent('Conversation: GetQuestion', async (conv) => {
+app.intent('Conversation GetQuestion', async (conv) => {
   const email = conv.user.profile.payload.email;
 
   // The output command getting a question and asking the users
@@ -237,7 +237,7 @@ app.intent('Conversation DeepLinkNextQuestion', (conv) => {
 });
 
 // A method for ending the conversation and return to app welcome intent
-app.intent('Conversation: Cancel', (conv) => {
+app.intent('Conversation Cancel', (conv) => {
 
   conv.ask("Ending conversation! Would you like to try another module or would you like to quit?");
 
@@ -251,7 +251,7 @@ app.intent('Conversation DeepLinkRepeatQuestion', (conv) => {
 });
 
 // A method for repeating the last question given
-app.intent('Conversation: RepeatQuestion', async (conv) => {
+app.intent('Conversation RepeatQuestion', async (conv) => {
   // get the user's email
   const email = conv.user.profile.payload.email;
 
@@ -361,7 +361,7 @@ var question = {
 */
 
 // Action for entering the message sandbox
-app.intent('Sandbox: MessageWelcome', (conv) => {
+app.intent('Sandbox MessageWelcome', (conv) => {
   conv.ask(`Welcome to the memory box. Here, you can leave memories and later relieve them!`);
   conv.ask(`For writing a memory say: enter memory, and for relieving a memory say: relieve memory`);
 
@@ -370,7 +370,7 @@ app.intent('Sandbox: MessageWelcome', (conv) => {
 });
 
 // Action for getting and storing a new memory
-app.intent('Sandbox: WriteMessage', async (conv) => {
+app.intent('Sandbox WriteMessage', async (conv) => {
   try {
     // take the current user's email
     const email = conv.user.profile.payload.email;
@@ -400,12 +400,53 @@ app.intent('Sandbox: WriteMessage', async (conv) => {
     conv.close(`${e}`);
   }
 
+  conv.ask(`Your memory is: "${memory}". Is this what you meant?`);
+
   // response
-  conv.ask(`Your memory is: "${memory}". If you want to hear this again at some point in the future just say: relieve memory. What would you like to do now? You can play a game, get a topic for conversation o quit`);
+  // conv.ask(`Your memory is: "${memory}". If you want to hear one of your memories again at some point in the future just say: "relieve memory". What would you like to do now? You can play a game, get a topic for conversation o quit`);
 });
 
+
+app.intent('Sandbox WriteMessage Correct', (conv) => {
+  conv.ask(`Awesome! I have registered your memory. If you want to hear one of your memories again at some point in the future just say: "relieve memory". What would you like to do now? You can play a game, get a topic for conversation o quit`);
+});
+
+app.intent('Sandbox WriteMessage Incorrect', async (conv) => {
+  try {
+    // take the current user's email
+    const email = conv.user.profile.payload.email;
+
+    // Store the message from the conversation
+    var memory = [conv.parameters.message];
+    
+    // get the doc from the db based on the request profile
+    const usersCollection = db.collection('users');
+    const snapshot = await usersCollection.where('email', '==', email).get();
+
+    // take the sandboxMessage object from the found doc
+    let memories = snapshot.docs[0].data().sandboxMessage;
+    
+    // delete the wrong memory
+    memories.splice(2, 1);
+    // create a new array with the newest memory
+    memories = memories.concat(memory);
+    
+    // update db with the new memory
+    const userRef = db.collection('users').doc(email);
+    userRef.update({ sandboxMessage: memories });
+  } catch (e) {
+    conv.close(`${e}`);
+  }
+  conv.ask(`Awesome! I have registered your memory. If you want to hear one of your memories again at some point in the future just say: "relieve memory". What would you like to do now? You can play a game, get a topic for conversation o quit`);
+});
+
+app.intent('Sandbox WriteMessage Incorrect Yes', (conv) => {
+  conv.ask(`Awesome! I have registered your memory. If you want to hear one of your memories again at some point in the future just say: "relieve memory". What would you like to do now? You can play a game, get a topic for conversation o quit`);
+});
+
+
 // Action for getting the last memory stored
-app.intent('Sandbox: Relieve memory', async (conv) => {
+app.intent('Sandbox Relieve memory', async (conv) => {
   // get the user's email
   const email = conv.user.profile.payload.email;
 
@@ -444,7 +485,7 @@ app.intent('Help General Help', (conv) => {
           "Ok Google, tell This Closerr we are ready" to get the next steps in the game, <break strength="medium"/>
           "Hey Google, repeat the question" to get the topic for conversation repeated, <break strength="medium"/>
           And "Ok Google, next question" to get a new topic. </s> </speak>`);
-  conv.ask(`For detailed commands available in each module just say: "Hey Google, ask This Closerr for help with" followed by the name of the module `);
+  conv.ask(`For detailed commands available in each module just say: "Ok Google, ask This Closerr for help with" followed by the name of the module `);
 });
 
 app.intent('Help Game Help', (conv) => {
