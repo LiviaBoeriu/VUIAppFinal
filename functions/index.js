@@ -470,7 +470,7 @@ app.intent('Sandbox Relieve memory', async (conv) => {
     // let string = getKeysOfObject(snapshot.docs[0].data());
 
     // response
-    conv.close(`Your memory is: ${randomMemory}`);
+    conv.ask(`Your memory is: ${randomMemory}. What would you like to do now? You can have a conversation, play a game or quit.`);
   } catch (e) {
     conv.close(`${e}`);
   }
